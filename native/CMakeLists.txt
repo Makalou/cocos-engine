@@ -1016,6 +1016,8 @@ cocos_source_files(
 
                  cocos/renderer/gfx-base/SPIRVUtils.h
                  cocos/renderer/gfx-base/SPIRVUtils.cpp
+                 cocos/renderer/gfx-base/GFXAccelerationStructure.h
+                 cocos/renderer/gfx-base/GFXAccelerationStructure.cpp
                  cocos/renderer/gfx-base/GFXObject.h
                  cocos/renderer/gfx-base/GFXObject.cpp
                  cocos/renderer/gfx-base/GFXBuffer.cpp
@@ -1091,6 +1093,8 @@ cocos_source_files(
                  cocos/renderer/gfx-agent/TextureAgent.h
                  cocos/renderer/gfx-agent/TextureAgent.cpp
 
+                 cocos/renderer/gfx-validator/AccelerationStructureValidator.h
+                 cocos/renderer/gfx-validator/AccelerationStructureValidator.cpp
                  cocos/renderer/gfx-validator/BufferValidator.h
                  cocos/renderer/gfx-validator/BufferValidator.cpp
                  cocos/renderer/gfx-validator/CommandBufferValidator.h
@@ -1154,6 +1158,8 @@ cocos_source_files(
                  cocos/renderer/gfx-empty/EmptySwapchain.cpp
                  cocos/renderer/gfx-empty/EmptyTexture.h
                  cocos/renderer/gfx-empty/EmptyTexture.cpp
+                 cocos/renderer/gfx-empty/EmptyAccelerationStructure.h
+                 cocos/renderer/gfx-empty/EmptyAccelerationStructure.cpp
 
                  cocos/renderer/pipeline/BatchedBuffer.cpp
                  cocos/renderer/pipeline/BatchedBuffer.h
@@ -1189,6 +1195,8 @@ cocos_source_files(
                  cocos/renderer/pipeline/PipelineUBO.h
                  cocos/renderer/pipeline/PipelineSceneData.cpp
                  cocos/renderer/pipeline/PipelineSceneData.h
+                 cocos/renderer/pipeline/SceneAccelerationStructure.cpp
+                 cocos/renderer/pipeline/SceneAccelerationStructure.h
                  cocos/renderer/pipeline/forward/ForwardFlow.cpp
                  cocos/renderer/pipeline/forward/ForwardFlow.h
                  cocos/renderer/pipeline/forward/ForwardPipeline.cpp
@@ -1564,6 +1572,8 @@ if(CC_USE_VULKAN)
 
     cocos_source_files(
                      cocos/renderer/gfx-vulkan/vk_mem_alloc.h
+                     cocos/renderer/gfx-vulkan/VKAccelerationStructure.cpp
+                     cocos/renderer/gfx-vulkan/VKAccelerationStructure.h
                      cocos/renderer/gfx-vulkan/VKBuffer.cpp
                      cocos/renderer/gfx-vulkan/VKBuffer.h
                      cocos/renderer/gfx-vulkan/VKCommandBuffer.cpp

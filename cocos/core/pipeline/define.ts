@@ -29,7 +29,7 @@ import { SubModel } from '../renderer/scene/submodel';
 import { Layers } from '../scene-graph/layers';
 import { legacyCC } from '../global-exports';
 import { BindingMappingInfo, DescriptorType, Type, ShaderStageFlagBit, UniformStorageBuffer, DescriptorSetLayoutBinding,
-    Uniform, UniformBlock, UniformSamplerTexture, UniformStorageImage, Device, FormatFeatureBit, Format,
+    Uniform, UniformBlock, UniformSamplerTexture, UniformStorageImage, Device, FormatFeatureBit, Format, UniformAccelerationStructure,
 } from '../gfx';
 
 export const PIPELINE_FLOW_MAIN = 'MainFlow';
@@ -100,7 +100,7 @@ export interface IRenderQueueDesc {
 
 export interface IDescriptorSetLayoutInfo {
     bindings: DescriptorSetLayoutBinding[];
-    layouts: Record<string, UniformBlock | UniformSamplerTexture | UniformStorageImage | UniformStorageBuffer>;
+    layouts: Record<string, UniformBlock | UniformSamplerTexture | UniformStorageImage | UniformStorageBuffer|UniformAccelerationStructure>;
 }
 
 export const globalDescriptorSetLayout: IDescriptorSetLayoutInfo = { bindings: [], layouts: {} };
@@ -120,6 +120,8 @@ export enum PipelineGlobalBindings {
     SAMPLER_ENVIRONMENT, // don't put this as the first sampler binding due to Mac GL driver issues: cubemap at texture unit 0 causes rendering issues
     SAMPLER_SPOT_SHADOW_MAP,
     SAMPLER_DIFFUSEMAP,
+
+    ACCLERATION_STRUCTURE_TOP_LEVEL,
 
     COUNT,
 }
@@ -352,6 +354,13 @@ const UNIFORM_DIFFUSEMAP_DESCRIPTOR = new DescriptorSetLayoutBinding(UNIFORM_DIF
 const UNIFORM_DIFFUSEMAP_LAYOUT = new UniformSamplerTexture(SetIndex.GLOBAL, UNIFORM_DIFFUSEMAP_BINDING, UNIFORM_DIFFUSEMAP_NAME, Type.SAMPLER_CUBE, 1);
 globalDescriptorSetLayout.layouts[UNIFORM_DIFFUSEMAP_NAME] = UNIFORM_DIFFUSEMAP_LAYOUT;
 globalDescriptorSetLayout.bindings[UNIFORM_DIFFUSEMAP_BINDING] = UNIFORM_DIFFUSEMAP_DESCRIPTOR;
+
+const UNIFORM_ACCELERATION_STUCTURE_TOP_LEVEL_NAME = 'cc_accelerationStructureTopLevel';
+export const UNIFORM_ACCELERATION_STUCTURE_TOP_LEVEL_BINDING = PipelineGlobalBindings.ACCLERATION_STRUCTURE_TOP_LEVEL;
+const UNIFORM_ACCELERATION_STUCTURE_TOP_LEVEL_DESCRIPTOR = new DescriptorSetLayoutBinding(UNIFORM_ACCELERATION_STUCTURE_TOP_LEVEL_BINDING, DescriptorType.ACCELERATION_STRUCTURE, 1, ShaderStageFlagBit.FRAGMENT);
+const UNIFORM_ACCELERATION_STUCTURE_TOP_LEVEL_LAYOUT = new UniformAccelerationStructure(SetIndex.GLOBAL, UNIFORM_ACCELERATION_STUCTURE_TOP_LEVEL_BINDING, UNIFORM_ACCELERATION_STUCTURE_TOP_LEVEL_NAME,  1);
+globalDescriptorSetLayout.layouts[UNIFORM_ACCELERATION_STUCTURE_TOP_LEVEL_NAME] = UNIFORM_ACCELERATION_STUCTURE_TOP_LEVEL_LAYOUT;
+globalDescriptorSetLayout.bindings[UNIFORM_ACCELERATION_STUCTURE_TOP_LEVEL_BINDING] = UNIFORM_ACCELERATION_STUCTURE_TOP_LEVEL_DESCRIPTOR;
 
 /**
  * @en The sampler for spot light shadow map

@@ -231,6 +231,8 @@ enum class CC_DLL PipelineGlobalBindings {
     SAMPLER_SPOT_SHADOW_MAP,
     SAMPLER_DIFFUSEMAP,
 
+    ACCEL_STRUC_TOPLEVEL,
+
     COUNT,
 };
 CC_ENUM_CONVERSION_OPERATOR(PipelineGlobalBindings)
@@ -501,6 +503,7 @@ struct CC_DLL DescriptorSetLayoutInfos {
     ccstd::unordered_map<ccstd::string, gfx::UniformBlock> blocks;
     ccstd::unordered_map<ccstd::string, gfx::UniformSamplerTexture> samplers;
     ccstd::unordered_map<ccstd::string, gfx::UniformStorageImage> storeImages;
+    gfx::AccelerationStructureLayout tlas;
 };
 extern CC_DLL DescriptorSetLayoutInfos globalDescriptorSetLayout;
 extern CC_DLL DescriptorSetLayoutInfos localDescriptorSetLayout;
@@ -557,6 +560,13 @@ struct CC_DLL DIFFUSEMAP {
     static constexpr uint32_t BINDING = static_cast<uint32_t>(PipelineGlobalBindings::SAMPLER_DIFFUSEMAP);
     static const gfx::DescriptorSetLayoutBinding DESCRIPTOR;
     static const gfx::UniformSamplerTexture LAYOUT;
+    static const ccstd::string NAME;
+};
+
+struct CC_DLL TOPLEVELAS {
+    static constexpr uint32_t BINDING = static_cast<uint32_t>(PipelineGlobalBindings::ACCEL_STRUC_TOPLEVEL);
+    static const gfx::DescriptorSetLayoutBinding DESCRIPTOR;
+    static const gfx::AccelerationStructureLayout LAYOUT;
     static const ccstd::string NAME;
 };
 

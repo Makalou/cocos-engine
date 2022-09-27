@@ -44,6 +44,7 @@ void DescriptorSet::initialize(const DescriptorSetInfo &info) {
     _buffers.resize(descriptorCount);
     _textures.resize(descriptorCount);
     _samplers.resize(descriptorCount);
+    _accels.resize(descriptorCount);
 
     doInit(info);
 }
@@ -56,6 +57,7 @@ void DescriptorSet::destroy() {
     _buffers.clear();
     _textures.clear();
     _samplers.clear();
+    _accels.clear();
 }
 
 void DescriptorSet::bindBuffer(uint32_t binding, Buffer *buffer, uint32_t index) {
@@ -81,6 +83,15 @@ void DescriptorSet::bindSampler(uint32_t binding, Sampler *sampler, uint32_t ind
         _isDirty = true;
     }
 }
+
+void DescriptorSet::bindAccelerationStructure(uint32_t binding, AccelerationStructure* accel, uint32_t index) {
+    const uint32_t descriptorIndex = _layout->getDescriptorIndices()[binding];
+    if (_accels[descriptorIndex + index]!=accel) {
+        _accels[descriptorIndex + index] = accel;
+        _isDirty = true;
+    }
+}
+
 
 bool DescriptorSet::bindBufferJSB(uint32_t binding, Buffer *buffer, uint32_t index) {
     bindBuffer(binding, buffer, index);
@@ -120,6 +131,15 @@ Sampler *DescriptorSet::getSampler(uint32_t binding, uint32_t index) const {
     if (descriptorIndex >= _samplers.size()) return nullptr;
     return _samplers[descriptorIndex];
 }
+
+AccelerationStructure *DescriptorSet::getAccelerationStructure(uint32_t binding, uint32_t index) const {
+    const ccstd::vector<uint32_t> &descriptorIndices = _layout->getDescriptorIndices();
+    if (binding >= descriptorIndices.size()) return nullptr;
+    const uint32_t descriptorIndex = descriptorIndices[binding] + index;
+    if (descriptorIndex >= _accels.size()) return nullptr;
+    return _accels[descriptorIndex];
+}
+
 
 } // namespace gfx
 } // namespace cc
