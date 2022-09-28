@@ -30,6 +30,7 @@
 #include "base/Log.h"
 #include "base/std/container/unordered_set.h"
 #include "core/memop/CachedArray.h"
+#include "gfx-vulkan/VKAccelerationStructure.h"
 
 #define TBB_USE_EXCEPTIONS 0 // no-rtti for now
 #include "tbb/concurrent_unordered_map.h"
@@ -152,6 +153,24 @@ struct CCVKGPUTextureView {
 
     // descriptor infos
     VkImageView vkImageView = VK_NULL_HANDLE;
+};
+
+struct CCVKGPUAccelerationStructure{
+    ASBuildFlags buildFlags = ASBuildFlagBits::PREFER_FAST_BUILD | ASBuildFlagBits::ALLOW_UPDATE;
+    VkAccelerationStructureBuildGeometryInfoKHR buildGeometryInfo{VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR};
+    //VkAccelerationStructureBuildRangeInfoKHR* buildRangeInfos;
+    std::variant<ccstd::vector<ASTriangleMesh>, ccstd::vector<ASAABB>, ccstd::vector<ASInstance>> geomtryInfos;
+
+    VkAccelerationStructureBuildSizesInfoKHR buildSizesInfo{VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR};
+    ccstd::vector<VkAccelerationStructureGeometryKHR> geometries;
+    ccstd::vector<VkAccelerationStructureBuildRangeInfoKHR> rangeInfos{};
+    // todo
+    // descriptor infos
+    Buffer *accelStructBuffer = nullptr;
+    Buffer *instancesBuffer = nullptr;
+    //VkBuffer vkInstanceBuffer = VK_NULL_HANDLE;
+    //VmaAllocationInfo InstanceBufferallocInfo;
+    VkAccelerationStructureKHR vkAccelerationStructure = VK_NULL_HANDLE;
 };
 
 struct CCVKGPUSampler {
@@ -292,6 +311,7 @@ union CCVKDescriptorInfo {
     VkDescriptorImageInfo image;
     VkDescriptorBufferInfo buffer;
     VkBufferView texelBufferView;
+    VkAccelerationStructureKHR accelerationStructure;
 };
 struct CCVKGPUDescriptor {
     DescriptorType type = DescriptorType::UNKNOWN;
@@ -299,6 +319,7 @@ struct CCVKGPUDescriptor {
     CCVKGPUBufferView *gpuBufferView = nullptr;
     CCVKGPUTextureView *gpuTextureView = nullptr;
     CCVKGPUSampler *gpuSampler = nullptr;
+    CCVKGPUAccelerationStructure *gpuAccelerrationStructure = nullptr;
 };
 
 struct CCVKGPUDescriptorSetLayout;
@@ -312,6 +333,7 @@ struct CCVKGPUDescriptorSet {
         VkDescriptorSet vkDescriptorSet = VK_NULL_HANDLE;
         ccstd::vector<CCVKDescriptorInfo> descriptorInfos;
         ccstd::vector<VkWriteDescriptorSet> descriptorUpdateEntries;
+        VkWriteDescriptorSetAccelerationStructureKHR writeDesAS;
     };
     ccstd::vector<Instance> instances; // per swapchain image
 
@@ -912,6 +934,10 @@ public:
     void connect(const CCVKGPUSampler *sampler, VkDescriptorImageInfo *descriptor) {
         _samplers[sampler].push(descriptor);
     }
+    void connect(const CCVKGPUDescriptorSet *set, const CCVKGPUAccelerationStructure *accel, VkAccelerationStructureKHR *descriptor) {
+        _accels[accel].sets.insert(set);
+        _accels[accel].descriptors.push(descriptor);
+    }
 
     void update(const CCVKGPUBufferView *buffer) {
         for (const auto &it : _buffers) {
@@ -967,6 +993,19 @@ public:
             if (descriptors[i] == descriptor) {
                 doUpdate(sampler, descriptor);
                 break;
+            }
+        }
+    }
+
+    void update(const CCVKGPUAccelerationStructure *accel, VkAccelerationStructureKHR *descriptor) {
+        for (const auto &it : _accels) {
+            if (it.first->vkAccelerationStructure != accel->vkAccelerationStructure) continue;
+            const auto &info = it.second;
+            for (uint32_t i = 0U; i < info.descriptors.size(); i++) {
+                doUpdate(accel, info.descriptors[i]);
+            }
+            for (const auto *set : info.sets) {
+                _descriptorSetHub->record(set);
             }
         }
     }
@@ -1036,6 +1075,13 @@ public:
         descriptors.fastRemove(descriptors.indexOf(descriptor));
     }
 
+    void disengage(const CCVKGPUAccelerationStructure *accel,VkAccelerationStructureKHR *descriptor) {
+        auto it = _accels.find(accel);
+        if (it == _accels.end()) return;
+        auto &descriptors = it->second.descriptors;
+        descriptors.fastRemove(descriptors.indexOf(descriptor));
+    }
+
 private:
     void doUpdate(const CCVKGPUBufferView *buffer, VkDescriptorBufferInfo *descriptor) {
         descriptor->buffer = buffer->gpuBuffer->vkBuffer;
@@ -1060,6 +1106,10 @@ private:
         descriptor->sampler = sampler->vkSampler;
     }
 
+    static void doUpdate(const CCVKGPUAccelerationStructure *accel, VkAccelerationStructureKHR *descriptor) {
+        *descriptor = accel->vkAccelerationStructure;
+    }
+
     template <typename T>
     struct DescriptorInfo {
         ccstd::unordered_set<const CCVKGPUDescriptorSet *> sets;
@@ -1070,6 +1120,7 @@ private:
     ccstd::unordered_map<const CCVKGPUBufferView *, DescriptorInfo<VkDescriptorBufferInfo>> _buffers;
     ccstd::unordered_map<const CCVKGPUTextureView *, DescriptorInfo<VkDescriptorImageInfo>> _textures;
     ccstd::unordered_map<const CCVKGPUSampler *, CachedArray<VkDescriptorImageInfo *>> _samplers;
+    ccstd::unordered_map<const CCVKGPUAccelerationStructure *, DescriptorInfo<VkAccelerationStructureKHR>> _accels;
 
     CCVKGPUDescriptorSetHub *_descriptorSetHub = nullptr;
 };
