@@ -168,9 +168,9 @@ struct CCVKGPUAccelerationStructure{
     // descriptor infos
     Buffer *accelStructBuffer = nullptr;
     Buffer *instancesBuffer = nullptr;
-    //VkBuffer vkInstanceBuffer = VK_NULL_HANDLE;
-    //VmaAllocationInfo InstanceBufferallocInfo;
+
     VkAccelerationStructureKHR vkAccelerationStructure = VK_NULL_HANDLE;
+    VkQueryPool vkCompactedSizeQueryPool = VK_NULL_HANDLE;
 };
 
 struct CCVKGPUSampler {
