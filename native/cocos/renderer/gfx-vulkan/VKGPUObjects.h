@@ -155,24 +155,6 @@ struct CCVKGPUTextureView {
     VkImageView vkImageView = VK_NULL_HANDLE;
 };
 
-struct CCVKGPUAccelerationStructure{
-    ASBuildFlags buildFlags = ASBuildFlagBits::PREFER_FAST_BUILD | ASBuildFlagBits::ALLOW_UPDATE;
-    VkAccelerationStructureBuildGeometryInfoKHR buildGeometryInfo{VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR};
-    //VkAccelerationStructureBuildRangeInfoKHR* buildRangeInfos;
-    std::variant<ccstd::vector<ASTriangleMesh>, ccstd::vector<ASAABB>, ccstd::vector<ASInstance>> geomtryInfos;
-
-    VkAccelerationStructureBuildSizesInfoKHR buildSizesInfo{VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR};
-    ccstd::vector<VkAccelerationStructureGeometryKHR> geometries;
-    ccstd::vector<VkAccelerationStructureBuildRangeInfoKHR> rangeInfos{};
-    // todo
-    // descriptor infos
-    Buffer *accelStructBuffer = nullptr;
-    Buffer *instancesBuffer = nullptr;
-
-    VkAccelerationStructureKHR vkAccelerationStructure = VK_NULL_HANDLE;
-    VkQueryPool vkCompactedSizeQueryPool = VK_NULL_HANDLE;
-};
-
 struct CCVKGPUSampler {
     Filter minFilter = Filter::LINEAR;
     Filter magFilter = Filter::LINEAR;
@@ -305,6 +287,25 @@ struct CCVKGPUInputAssembler {
     CCVKGPUBufferView *gpuIndirectBuffer = nullptr;
     ccstd::vector<VkBuffer> vertexBuffers;
     ccstd::vector<VkDeviceSize> vertexBufferOffsets;
+};
+
+struct CCVKGPUAccelerationStructure {
+    ASBuildFlags buildFlags = ASBuildFlagBits::PREFER_FAST_BUILD | ASBuildFlagBits::ALLOW_UPDATE;
+    VkAccelerationStructureBuildGeometryInfoKHR buildGeometryInfo{VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR};
+    VkAccelerationStructureBuildSizesInfoKHR buildSizesInfo{VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR};
+
+    std::variant<ccstd::vector<ASTriangleMesh>, ccstd::vector<ASAABB>, ccstd::vector<ASInstance>> geomtryInfos;
+    ccstd::vector<VkAccelerationStructureGeometryKHR> geometries;
+    ccstd::vector<VkAccelerationStructureBuildRangeInfoKHR> rangeInfos{};
+    // todo
+    Buffer *accelStructBuffer = nullptr;
+    Buffer *instancesBuffer = nullptr;
+    VkBuffer scratchBuffer = VK_NULL_HANDLE;
+    VkDeviceSize scratchBufferSize{0};
+    VmaAllocation scratchVmaAllocation{};
+
+    VkAccelerationStructureKHR vkAccelerationStructure = VK_NULL_HANDLE;
+    VkQueryPool vkCompactedSizeQueryPool = VK_NULL_HANDLE;
 };
 
 union CCVKDescriptorInfo {
@@ -1213,6 +1214,7 @@ public:
     DEFINE_RECYCLE_BIN_COLLECT_FN(CCVKGPUDescriptorSetLayout, RecycledType::DESCRIPTOR_SET_LAYOUT, res.gpuDescriptorSetLayout = gpuRes)
     DEFINE_RECYCLE_BIN_COLLECT_FN(CCVKGPUPipelineLayout, RecycledType::PIPELINE_LAYOUT, res.gpuPipelineLayout = gpuRes)
     DEFINE_RECYCLE_BIN_COLLECT_FN(CCVKGPUPipelineState, RecycledType::PIPELINE_STATE, res.gpuPipelineState = gpuRes)
+    DEFINE_RECYCLE_BIN_COLLECT_FN(CCVKGPUAccelerationStructure,RecycledType::ACCELERATION_STRUCTURE,res.gpuAccelerationStructure = gpuRes)
 
     void clear();
 
@@ -1230,6 +1232,7 @@ private:
         DESCRIPTOR_SET_LAYOUT,
         PIPELINE_LAYOUT,
         PIPELINE_STATE,
+        ACCELERATION_STRUCTURE
     };
     struct Buffer {
         VkBuffer vkBuffer;
@@ -1256,6 +1259,7 @@ private:
             CCVKGPUDescriptorSetLayout *gpuDescriptorSetLayout;
             CCVKGPUPipelineLayout *gpuPipelineLayout;
             CCVKGPUPipelineState *gpuPipelineState;
+            CCVKGPUAccelerationStructure *gpuAccelerationStructure;
         };
     };
     CCVKGPUDevice *_device = nullptr;
@@ -1439,6 +1443,9 @@ public:
 private:
     ccstd::unordered_map<CCVKGPUTexture *, ccstd::vector<CCVKGPUFramebuffer *>> _framebuffers;
 };
+
+
+
 
 } // namespace gfx
 } // namespace cc
