@@ -27,7 +27,7 @@ namespace cc
             auto* device = gfx::Device::getInstance();
 
             for (const auto& pModel : scene->getModels()) {
-                if (!pModel->getNode()->isValid()||!pModel->getNode()->isActive()) {
+                if (!pModel->getNode()->isValid() || !pModel->getNode()->isActive() || pModel->getNode()->getName() == "Profiler_Root") {
                     continue;
                 }
 
@@ -73,7 +73,24 @@ namespace cc
                     _needRebuild = true;
                     gfx::ASInstance tlasGeom{};
                     //tlasGeom.stype = gfx::ASGeometryType::INSTANCE;
-                    tlasGeom.instanceCustomIdx = pModel->getInstMatWorldIdx();
+                    tlasGeom.instanceCustomIdx = 0;
+
+                    if (pModel->getNode()->getName() == "Cube-001") {
+                        tlasGeom.instanceCustomIdx = 1;
+                    } else if (pModel->getNode()->getName() == "Cube-002") {
+                        tlasGeom.instanceCustomIdx = 2;
+                    } else if (pModel->getNode()->getName() == "Cube-003") {
+                        tlasGeom.instanceCustomIdx = 3;
+                    } else if (pModel->getNode()->getName() == "Cube-004"){
+                        tlasGeom.instanceCustomIdx = 4;
+                    } else if (pModel->getNode()->getName() == "stenford_dragon_high") {
+                        tlasGeom.instanceCustomIdx = 5;
+                    } else if (pModel->getNode()->getName() == "Cube") {
+                        tlasGeom.instanceCustomIdx = 6;
+                    } else if (pModel->getNode()->getName() == "wall3") {
+                        tlasGeom.instanceCustomIdx = 7;
+                    }
+                    
                     tlasGeom.shaderBindingTableRecordOffset = 0;
                     tlasGeom.mask = 0xFF;
                     tlasGeom.transform = pModel->getTransform()->getWorldMatrix();
@@ -135,7 +152,7 @@ namespace cc
                     model_it = modelMap.erase(model_it);
                     _needRebuild = true;
                 }
-            }
+            } 
 
             //sweep deactive blas
             auto blas_it = blasMap.begin();
@@ -151,6 +168,7 @@ namespace cc
 
             if (_needRebuild||_needUpdate) {
                 gfx::AccelerationStructureInfo tlasInfo{};
+                tlasInfo.buildFlag = gfx::ASBuildFlagBits::ALLOW_UPDATE | gfx::ASBuildFlagBits::PREFER_FAST_TRACE;
                 tlasInfo.instances.reserve(modelMap.size());
                 for (const auto& inst : modelMap) {
                     tlasInfo.instances.push_back(inst.second.second);
